@@ -1,0 +1,28 @@
+{
+  "name": "ticketing-system-api",
+  "version": "1.0.0",
+  "description": "Simulación de sistema de ticketing con nodejs",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amamedev/ticketing-system-api.git"
+  },
+  "author": "Alejandro Marín Melero",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/amamedev/ticketing-system-api/issues"
+  },
+  "homepage": "https://github.com/amamedev/ticketing-system-api#readme",
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "json-2-csv": "^5.5.10",
+    "multer": "^2.1.1"
+  }
+}
