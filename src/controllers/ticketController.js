@@ -14,7 +14,6 @@ const ticketController = {
         message: "Ticket registrado correctamente",
         status: 201,
         success: true,
-        createdAt: new Date().toISOString(),
         data: {
           ticket: createdTicket,
         },
@@ -30,10 +29,13 @@ const ticketController = {
       const tickets = await ticketService.getTickets();
 
       return res.status(200).json({
-        status: 200,
         message: "Tickets obtenidos",
-        total: tickets.length,
-        data: tickets,
+        status: 200,
+        success: true,
+        data: {
+          total: tickets.length,
+          tickets: tickets,
+        },
       });
     } catch (error) {
       next(error);
@@ -48,7 +50,10 @@ const ticketController = {
       return res.status(200).json({
         status: 200,
         message: "Ticket obtenido",
-        data: ticket,
+        success: true,
+        data: {
+          ticket: ticket,
+        },
       });
     } catch (error) {
       next(error);
@@ -64,7 +69,10 @@ const ticketController = {
       return res.status(200).json({
         status: 200,
         message: "Ticket actualizado",
-        data: patchedTicket,
+        success: true,
+        data: {
+          ticket: patchedTicket,
+        },
       });
     } catch (error) {
       next(error);
@@ -78,7 +86,10 @@ const ticketController = {
       return res.status(200).json({
         status: 200,
         message: "Se han eliminado todos los tickets",
-        data: deletedTickets,
+        success: true,
+        data: {
+          tickets: deletedTickets,
+        },
       });
     } catch (error) {
       next(error);
@@ -94,7 +105,10 @@ const ticketController = {
       return res.status(200).json({
         status: 200,
         message: "Ticket eliminado",
-        data: deletedTicket,
+        success: true,
+        data: {
+          ticket: deletedTicket,
+        },
       });
     } catch (error) {
       next(error);
@@ -108,7 +122,16 @@ const ticketController = {
     try {
       // Procesar el archivo CSV y crear los tickets
       console.log("Importando tickets...");
-      await ticketService.importTickets(req.file);
+      const importedTickets = await ticketService.importTickets(req.file);
+      return res.status(200).json({
+        status: 200,
+        message: "Tickets importados",
+        success: true,
+        importedAt: new Date().toISOString(),
+        data: {
+          tickets: importedTickets,
+        },
+      });
     } catch (error) {
       next(error);
     }

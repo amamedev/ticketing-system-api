@@ -1,0 +1,18 @@
+[
+  {
+    "id": "63cc7f66-360c-436d-9c78-3199d4c98eba",
+    "titulo": "Generar informes",
+    "descripcion": "Generar informes de nuevas altas en recursos humanos",
+    "categoria": "gestion",
+    "prioridad": "media",
+    "categoriaID": "3bHi5f"
+  },
+  {
+    "id": "910745bd-f2dc-4861-9a05-ba29542124e2",
+    "titulo": "Desarrollo funcionalidad",
+    "descripcion": "Desarrollar funcionalidad de importaci�n de archivos",
+    "categoria": "desarrollo",
+    "prioridad": "alta",
+    "categoriaID": "2aGh4e"
+  }
+]

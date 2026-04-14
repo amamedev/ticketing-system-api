@@ -5,32 +5,48 @@ import fs from "fs";
 import { HttpError } from "../errors/httpErrorHandler.js";
 import { csvToJson, jsonToCsv } from "../utils/importExportCsv.js";
 import path from "path";
+import crypto from "crypto";
 
 /**
  * Service para la lógica del sistema de ticketing
  */
 
+// Generar ID
+const generateID = () => {
+  return crypto.randomUUID();
+};
+
 const ticketService = {
   // Lógica para crear un ticket
   createTicket: async (ticket) => {
+    // Crear entidad ticket
     const newTicket = {
-      id: "",
+      id: generateID(),
       titulo: ticket.titulo,
       descripcion: ticket.descripcion,
       categoria: ticket.categoria,
       prioridad: ticket.prioridad,
+      createdAt: new Date().toISOString(),
     };
 
+    // Pipeline de procesamiento
     const processedTicket = await ticketPipeline(newTicket);
     if (!processedTicket) {
       throw new HttpError(500, "Error al procesar el ticket");
     }
-    const createdTicket = await ticketRepository.addTicket(processedTicket);
-    if (!createdTicket.id) {
-      throw new HttpError(500, "Error al crear el ticket");
+
+    // Guardar en base de datos
+    let createdTicket;
+    try {
+      createdTicket = await ticketRepository.addTicket(processedTicket);
+    } catch (error) {
+      throw new HttpError(500, "Error en base de datos");
     }
+
+    // Emitir evento
     emitter.emit("createdTicket", createdTicket);
-    return processedTicket;
+    // Devolver ticket creado
+    return createdTicket;
   },
 
   // Lógica para obtener todos los tickets
@@ -80,19 +96,52 @@ const ticketService = {
 
   // Lógica para importar tickets desde un archivo
   importTickets: async (file) => {
+    // Validar que se haya seleccionado un archivo
     if (!file) {
       throw new HttpError(400, "No se ha seleccionado ningún archivo");
     }
+    // Validar que el archivo exista
     if (!fs.existsSync(file.path)) {
       throw new HttpError(404, "Archivo no encontrado en el servidor");
     }
-    const parsedTickets = await csvToJson(file.path);
-    if (parsedTickets.length === 0) {
+
+    // Convertir el archivo a JSON
+    let cenvertCsv;
+    try {
+      cenvertCsv = await csvToJson(file.path);
+    } catch (error) {
+      throw new HttpError(500, "Error al parsear el archivo");
+    }
+
+    // Validar que se hayan encontrado tickets en el archivo
+    if (cenvertCsv.length === 0) {
       throw new HttpError(400, "No se encontraron tickets en el archivo");
     }
-    const processedTickets = await ticketPipeline(parsedTickets);
-    const importedTickets =
-      await ticketRepository.importTickets(processedTickets);
+
+    // Procesar los tickets
+    const processedTickets = await ticketPipeline(cenvertCsv);
+    if (!processedTickets) {
+      throw new HttpError(500, "Error al procesar los tickets");
+    }
+
+    // Añadir ID a cada ticket procesado
+    let ticketsWithId = [];
+    processedTickets.forEach((ticket) => {
+      const modifyTicket = {
+        id: generateID(),
+        ...ticket,
+      };
+      ticketsWithId.push(modifyTicket);
+    });
+
+    // Importar los tickets
+    let importedTickets;
+    try {
+      importedTickets = await ticketRepository.importTickets(ticketsWithId);
+    } catch (error) {
+      throw new HttpError(500, "Error de base de datos");
+    }
+
     return importedTickets;
   },
 

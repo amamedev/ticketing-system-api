@@ -2,13 +2,7 @@
  * Respositorio para gestionar datos de base de datos (CRUD)
  */
 
-import crypto from "crypto";
 import { readTicketsDB, writeTicketsDB } from "../utils/readWriteTicketDB.js";
-
-// Generar ID
-const generateID = () => {
-  return crypto.randomUUID();
-};
 
 /**
  * Objeto repositorio de tickets
@@ -18,7 +12,6 @@ const ticketRepository = {
   addTicket: async (newTicket) => {
     try {
       const tickets = await readTicketsDB();
-      newTicket.id = generateID();
       tickets.push(newTicket);
       await writeTicketsDB(tickets);
       return newTicket;
@@ -72,10 +65,7 @@ const ticketRepository = {
   deleteTickets: async () => {
     try {
       const tickets = await readTicketsDB();
-      if (tickets.length === 0) {
-        return null;
-      }
-      await writeTicketsDB();
+      await writeTicketsDB([]);
       return tickets;
     } catch (error) {
       throw new Error(`Error al eliminar todos los tickets, ${error}`);
@@ -86,12 +76,16 @@ const ticketRepository = {
   deleteTicketByID: async (id) => {
     try {
       const tickets = await readTicketsDB();
-      const deletedTicket = tickets.find((ticket) => ticket.id === id);
-      if (!deletedTicket) {
-        return null;
-      }
-      const result = tickets.filter((ticket) => ticket.id !== id);
-      await writeTicketsDB(result);
+      const index = tickets.findIndex((t) => t.id === id);
+
+      if (index === -1) return null;
+
+      const deletedTicket = tickets[index];
+
+      tickets.splice(index, 1);
+
+      await writeTicketsDB(tickets);
+
       return deletedTicket;
     } catch (error) {
       throw new Error(`Error al eliminar el ticket, ${error}`);
@@ -99,18 +93,12 @@ const ticketRepository = {
   },
 
   // Importar tickets
-  importTickets: async (parsedTickets) => {
+  importTickets: async (ticketsWithId) => {
     try {
       const tickets = await readTicketsDB();
-      parsedTickets.forEach((ticket) => {
-        const modifyTicket = {
-          id: generateID(),
-          ...ticket,
-        };
-        tickets.push(modifyTicket);
-      });
-
-      return await writeTicketsDB(tickets);
+      const newTickets = [...tickets, ...ticketsWithId];
+      await writeTicketsDB(newTickets);
+      return newTickets;
     } catch (error) {
       throw new Error(`Error al importar los tickets, ${error}`);
     }

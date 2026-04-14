@@ -3,7 +3,7 @@ import { categorizeTickets } from "../processors/categorizeTickets.js";
 const ticketsPipeline = async (tickets) => {
   const steps = [categorizeTickets];
 
-  console.log("Procesando ticket...");
+  console.log("Procesando tickets...");
 
   let results;
 
@@ -13,7 +13,7 @@ const ticketsPipeline = async (tickets) => {
     results = await step(tickets);
   }
 
-  console.log("Ticket procesado");
+  console.log("Tickets procesados");
   return results;
 };
 
