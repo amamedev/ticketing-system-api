@@ -1,10 +1,9 @@
 import emitter from "../events/eventBus.js";
-import ticketsPipeline from "../pipelines/ticketsPipeline.js";
-import ticketRepository from "../repository/ticketRepository.js";
-import csvParser from "../utils/csvParser.js";
+import ticketPipeline from "../pipelines/ticketPipeline.js";
+import ticketRepository from "../repositories/ticketRepository.js";
 import fs from "fs";
 import { HttpError } from "../errors/httpErrorHandler.js";
-import { csvToJson, jsonToCsv } from "../utils/utils.js";
+import { csvToJson, jsonToCsv } from "../utils/importExportCsv.js";
 import path from "path";
 
 /**
@@ -22,17 +21,23 @@ const ticketService = {
       prioridad: ticket.prioridad,
     };
 
-    const processedTicket = await ticketsPipeline([newTicket]);
+    const processedTicket = await ticketPipeline(newTicket);
+    if (!processedTicket) {
+      throw new HttpError(500, "Error al procesar el ticket");
+    }
     const createdTicket = await ticketRepository.addTicket(processedTicket);
+    if (!createdTicket.id) {
+      throw new HttpError(500, "Error al crear el ticket");
+    }
     emitter.emit("createdTicket", createdTicket);
-    return createdTicket;
+    return processedTicket;
   },
 
   // Lógica para obtener todos los tickets
   getTickets: async () => {
     const tickets = await ticketRepository.getTickets();
-    if (!tickets) {
-      throw new HttpError(404, "No se encontraron tickets");
+    if (tickets.length === 0) {
+      throw new HttpError(204, "No se encontraron tickets");
     }
     return tickets;
   },
@@ -74,15 +79,18 @@ const ticketService = {
   },
 
   // Lógica para importar tickets desde un archivo
-  importTickets: async (filePath) => {
-    if (!fs.existsSync(filePath)) {
+  importTickets: async (file) => {
+    if (!file) {
+      throw new HttpError(400, "No se ha seleccionado ningún archivo");
+    }
+    if (!fs.existsSync(file.path)) {
       throw new HttpError(404, "Archivo no encontrado en el servidor");
     }
-    const parsedTickets = await csvToJson(filePath);
+    const parsedTickets = await csvToJson(file.path);
     if (parsedTickets.length === 0) {
       throw new HttpError(400, "No se encontraron tickets en el archivo");
     }
-    const processedTickets = await ticketsPipeline(parsedTickets);
+    const processedTickets = await ticketPipeline(parsedTickets);
     const importedTickets =
       await ticketRepository.importTickets(processedTickets);
     return importedTickets;

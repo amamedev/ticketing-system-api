@@ -10,22 +10,17 @@ const ticketController = {
       const ticket = req.body;
       const createdTicket = await ticketService.createTicket(ticket);
 
-      if (!createdTicket) {
-        return res.status(500).json({
-          status: 500,
-          message: "No se pudo registrar el ticket",
-        });
-      }
-      return res.status(200).json({
-        status: 200,
+      return res.status(201).json({
         message: "Ticket registrado correctamente",
-        data: createdTicket,
+        status: 201,
+        success: true,
+        createdAt: new Date().toISOString(),
+        data: {
+          ticket: createdTicket,
+        },
       });
     } catch (error) {
-      res.status(500).json({
-        status: 500,
-        message: "Error al registrar el ticket",
-      });
+      next(error);
     }
   },
 
@@ -33,17 +28,6 @@ const ticketController = {
   getTickets: async (req, res, next) => {
     try {
       const tickets = await ticketService.getTickets();
-
-      if (tickets.length === 0) {
-        return res.status(204).end();
-      }
-
-      if (!tickets) {
-        return res.status(500).json({
-          status: 500,
-          message: "No se pudieron obtener los tickets",
-        });
-      }
 
       return res.status(200).json({
         status: 200,
@@ -91,12 +75,6 @@ const ticketController = {
   deleteTickets: async (req, res, next) => {
     try {
       const deletedTickets = await ticketService.deleteTickets();
-      if (!deletedTickets) {
-        return res.status(404).json({
-          status: 404,
-          message: "No hay tickets para eliminar",
-        });
-      }
       return res.status(200).json({
         status: 200,
         message: "Se han eliminado todos los tickets",
@@ -112,12 +90,7 @@ const ticketController = {
     try {
       const id = req.params.id;
       const deletedTicket = await ticketService.deleteTicketByID(id);
-      if (!deletedTicket) {
-        return res.status(404).json({
-          status: 404,
-          message: "Ticket no encontrado",
-        });
-      }
+
       return res.status(200).json({
         status: 200,
         message: "Ticket eliminado",
@@ -131,28 +104,11 @@ const ticketController = {
   /**
    * Importación y exportación de archivos
    */
-  ticketImport: async (req, res, next) => {
+  importTickets: async (req, res, next) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({
-          status: 400,
-          message: "No se ha seleccionado ningún archivo",
-        });
-      }
-
-      res.status(200).json({
-        status: 200,
-        message: "Archivo recibido correctamente, procesando...",
-        data: {
-          filename: req.file.filename,
-          originalname: req.file.originalname,
-          size: req.file.size,
-        },
-      });
-
       // Procesar el archivo CSV y crear los tickets
       console.log("Importando tickets...");
-      await ticketService.importTickets(req.file.path);
+      await ticketService.importTickets(req.file);
     } catch (error) {
       next(error);
     }
@@ -163,8 +119,6 @@ const ticketController = {
     try {
       const csv = await ticketService.exportTickets();
       res.download(csv);
-
-      // res.status(200).download(csv);
     } catch (error) {
       next(error);
     }

@@ -20,6 +20,6 @@ router.delete("/tickets/:id", ticketController.deleteTicketByID);
 router.post(
   "/tickets/import",
   upload.single("tickets"),
-  ticketController.ticketImport,
+  ticketController.importTickets,
 );
 export default router;
