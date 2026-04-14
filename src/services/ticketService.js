@@ -52,6 +52,9 @@ const ticketService = {
   // Lógica para obtener todos los tickets
   getTickets: async () => {
     const tickets = await ticketRepository.getTickets();
+    if (!Array.isArray(tickets)) {
+      throw new HttpError(500, "Error en base de datos");
+    }
     if (tickets.length === 0) {
       throw new HttpError(204, "No se encontraron tickets");
     }
