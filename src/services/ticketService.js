@@ -6,6 +6,8 @@ import { HttpError } from "../errors/httpErrorHandler.js";
 import { csvToJson, jsonToCsv } from "../utils/importExportCsv.js";
 import path from "path";
 import crypto from "crypto";
+import * as z from "zod";
+import { ticketSchema } from "../schemas/tickets/ticketSchema.js";
 
 /**
  * Service para la lógica del sistema de ticketing
@@ -22,15 +24,19 @@ const ticketService = {
     // Crear entidad ticket
     const newTicket = {
       id: generateID(),
-      titulo: ticket.titulo,
-      descripcion: ticket.descripcion,
-      categoria: ticket.categoria,
-      prioridad: ticket.prioridad,
-      createdAt: new Date().toISOString(),
+      createdAt: 2,
+      ...ticket,
     };
 
+    let validatedTicket;
+    try {
+      validatedTicket = ticketSchema.parse(newTicket);
+    } catch (error) {
+      throw new HttpError(400, error.issues[0].message);
+    }
+
     // Pipeline de procesamiento
-    const processedTicket = await ticketPipeline(newTicket);
+    const processedTicket = await ticketPipeline(validatedTicket);
     if (!processedTicket) {
       throw new HttpError(500, "Error al procesar el ticket");
     }
@@ -103,6 +109,12 @@ const ticketService = {
     if (!file) {
       throw new HttpError(400, "No se ha seleccionado ningún archivo");
     }
+
+    // Validar tipo de archivo
+    if (!file.originalname.endsWith(".csv")) {
+      throw new HttpError(400, "El archivo debe ser un CSV");
+    }
+
     // Validar que el archivo exista
     if (!fs.existsSync(file.path)) {
       throw new HttpError(404, "Archivo no encontrado en el servidor");
